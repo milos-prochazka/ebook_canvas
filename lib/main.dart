@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -21,7 +22,7 @@ class MyApp extends StatelessWidget
           TextStyle
           (
             color: Colors.black,
-            fontSize: 5,
+            fontSize: 5 + (i % 10),
           )
         )
       );
@@ -58,6 +59,34 @@ class _MyPainterState extends State<MyPainter>
   var _sides = 3.0;
   var _radius = 100.0;
   var _radians = 0.0;
+  Timer? timer;
+
+  @override
+  initState()
+  {
+    super.initState();
+    timer = Timer.periodic
+    (
+      Duration(milliseconds: 1), (timer)
+      {
+        setState
+        (
+          ()
+          {
+            _radians = _radians + 0.001;
+            if (_radians >= math.pi) _radians -= math.pi;
+          }
+        );
+      }
+    );
+  }
+
+  @override
+  void dispose()
+  {
+    timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context)
