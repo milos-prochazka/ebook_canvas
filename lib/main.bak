@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget
 
   MyApp() 
   {
-    for (int i = 0; i < 1000000; i++) 
+    for (int i = 0; i < 10000; i++) 
     {
       words.add
       (
@@ -26,6 +26,51 @@ class MyApp extends StatelessWidget
           )
         )
       );
+    }
+
+    breakLines(words, 1000);
+  }
+
+  void breakLines(List<WordSpan> words, int width) 
+  {
+    double top = 0;
+
+    for (int pageStart = 0; pageStart < words.length;) 
+    {
+      var pageEnd = pageStart;
+      double left = 0;
+
+      while (pageEnd < words.length) 
+      {
+        final word = words[pageEnd];
+        final p = word.painter;
+        final right = left + word.width + word.wordSpacing;
+
+        if (right < width || (pageEnd == pageStart)) 
+        {
+          left = right;
+          pageEnd++;
+        } 
+        else 
+        {
+          break;
+        }
+      }
+
+      double h = 0;
+      double t = 0;
+      left = 0;
+      for (int i = pageStart; i < pageEnd; i++) 
+      {
+        final word = words[i];
+        h = math.max(h, word.height);
+        word.xpos = left;
+        word.ypos = top;
+        left += word.width + word.wordSpacing;
+      }
+
+      top += h;
+      pageStart = pageEnd;
     }
   }
 
@@ -223,7 +268,7 @@ class ShapePainter extends CustomPainter
     paintText(canvas, size);
   }
 
-  void paintText(Canvas canvas, Size size) 
+  void paintText1(Canvas canvas, Size size) 
   {
     final textStyle = TextStyle
     (
@@ -268,6 +313,19 @@ class ShapePainter extends CustomPainter
     }
   }
 
+  void paintText(Canvas canvas, Size size) 
+  {
+    for (final word in words) 
+    {
+      if (word.ypos > size.height) 
+      {
+        break;
+      }
+
+      word.paint(canvas, 0, 0);
+    }
+  }
+
   @override
   bool shouldRepaint(CustomPainter oldDelegate) 
   {
@@ -280,6 +338,13 @@ class WordSpan
   TextPainter? _painter;
   late String text;
   late TextStyle style;
+  double ypos = 0;
+  double xpos = 0;
+  double baseLine = 0;
+  double wordSpacing = 0;
+  double left = 0;
+  double height = 0;
+  double width = 0;
 
   WordSpan(this.text, this.style);
 
@@ -300,7 +365,29 @@ class WordSpan
       p.layout(minWidth: 0.0, maxWidth: 10000.0);
       _painter = p;
 
+      final ml = p.computeLineMetrics();
+
+      if (ml.isNotEmpty) 
+      {
+        final metrics = ml.first;
+        wordSpacing = style.wordSpacing ?? p.height / 2;
+
+        baseLine = metrics.baseline;
+        height = metrics.height;
+        width = metrics.width;
+        left = metrics.left;
+      }
+
       return p;
     }
+  }
+
+  void paint(Canvas canvas, double xoffset, double yoffset) 
+  {
+    final textPainter = painter;
+
+    final offset = Offset(xpos - xoffset, ypos - yoffset);
+
+    textPainter.paint(canvas, offset);
   }
 }
