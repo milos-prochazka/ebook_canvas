@@ -12,23 +12,15 @@ class MyApp extends StatelessWidget
 
   MyApp() 
   {
-    for (int i = 0; i < 10000; i++) 
+    for (int i = 0; i < 20; i++) 
     {
       words.add
       (
-        WordSpan
-        (
-          'Hello$i',
-          TextStyle
-          (
-            color: Colors.black,
-            fontSize: 5 + (i % 10),
-          )
-        )
+        WordSpan('Řellj$i', TextStyle(color: Colors.black, fontSize: 5 + (i % 20), backgroundColor: Colors.amber))
       );
     }
 
-    breakLines(words, 1000);
+    breakLines(words, 1500);
   }
 
   void breakLines(List<WordSpan> words, int width) 
@@ -57,19 +49,30 @@ class MyApp extends StatelessWidget
         }
       }
 
-      double h = 0;
       double t = 0;
+      double basemax = 0;
       left = 0;
       for (int i = pageStart; i < pageEnd; i++) 
       {
         final word = words[i];
-        h = math.max(h, word.height);
+        basemax = math.max(basemax, word.baseLine);
         word.xpos = left;
         word.ypos = top;
+
         left += word.width + word.wordSpacing;
       }
 
-      top += h;
+      double height = 0;
+      for (int i = pageStart; i < pageEnd; i++) 
+      {
+        final word = words[i];
+        final descent = word.height - word.baseLine;
+        final yshift = basemax - word.baseLine;
+        height = math.max(height, basemax + descent);
+        word.ypos = yshift + top;
+      }
+
+      top += height;
       pageStart = pageEnd;
     }
   }
@@ -372,7 +375,7 @@ class WordSpan
         final metrics = ml.first;
         wordSpacing = style.wordSpacing ?? p.height / 2;
 
-        baseLine = metrics.baseline;
+        baseLine = metrics.ascent;
         height = metrics.height;
         width = metrics.width;
         left = metrics.left;
